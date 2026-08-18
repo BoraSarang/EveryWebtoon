@@ -1,0 +1,130 @@
+== WINDOW: 전체보기 ==
+AXWindow title="전체보기"
+  AXGroup
+    AXSplitGroup
+      AXGroup
+        AXScrollArea
+          AXOutline desc="Sidebar"
+            AXRow
+              AXCell
+                AXGroup
+                  AXHeading desc="내 보관함"
+            AXRow
+              AXCell
+                AXStaticText value="내 보관함"
+            AXRow
+              AXCell
+                AXStaticText value="최근 본"
+            AXRow
+              AXCell
+                AXStaticText value="나의 모음"
+                AXButton desc="추가"
+            AXRow
+              AXCell
+                AXImage desc="이동"
+                AXStaticText value="인기"
+                AXStaticText value="2"
+            AXRow
+              AXCell
+                AXGroup
+                  AXHeading desc="발견"
+            AXRow
+              AXCell
+                AXStaticText value="전체보기"
+            AXRow
+              AXCell
+                AXButton desc="네이버"
+                AXButton desc="요일별"
+                AXButton desc="장르별"
+                AXStaticText value="베스트 도전"
+                AXStaticText value="랭킹"
+                AXStaticText value="완결"
+            AXRow
+              AXCell
+                AXButton desc="카카오"
+                AXStaticText value="추천"
+                AXButton desc="요일별"
+                AXButton desc="장르별"
+                AXStaticText value="실시간 랭킹"
+                AXStaticText value="신작"
+                AXStaticText value="완결"
+            AXColumn
+        AXImage desc="externaldrive"
+        AXStaticText value="702.2 MB"
+      AXSplitter value="218"
+      AXGroup
+        AXScrollArea
+          AXStaticText value="전체보기"
+          AXStaticText value="917"
+          AXButton desc="새로고침"
+          AXImage desc="반짝반짝"
+          AXStaticText value="오늘의 웹툰 (화요일)"
+          AXStaticText value="N"
+          AXStaticText value="네이버"
+          AXScrollArea
+            AXButton desc="N, 백작가의 비밀스런 시녀님, 10.0, UP, 98화"
+            AXButton desc="N, 천만청춘, 10.0, UP, 88화"
+            AXButton desc="N, 가공낙원, 10.0, UP"
+            AXButton desc="N, 전리품 공작부인, 10.0, UP"
+            AXButton desc="N, 사람의 탈, 10.0, UP"
+            AXButton desc="N, 재난은 늘 곁에 있다, 10.0, UP"
+            AXButton desc="N, 그냥 선생님, 10.0, UP"
+            AXButton desc="N, 개집사, 10.0, UP"
+            AXButton desc="N, 비밀의 정원, 10.0, UP"
+            AXButton desc="N, 절대회귀, 10.0, UP"
+          AXStaticText value="K"
+          AXStaticText value="카카오"
+          AXScrollArea
+            AXButton desc="K, 결혼 장사2 ~잊히지 않을 노래~, 0.0, 08.16"
+            AXButton desc="K, 아기는 악당을 키운다, 0.0, NEW, 08.17"
+            AXButton desc="K, 나는 한 편의 극을 보았다, 0.0, NEW, 30화, 08.17"
+            AXButton desc="K, 후계자는 모르겠고 힐링이나 하렵니다, 0.0, NEW, 08.17"
+            AXButton desc="K, 겨울성의 아기 죄수님, 0.0, NEW, 08.17"
+            AXButton desc="K, 로드 오브 머니, 0.0, NEW, 08.17"
+            AXButton desc="K, 권왕전생, 0.0, NEW, 08.17"
+            AXButton desc="K, 저승식당, 0.0, NEW, 08.17"
+            AXButton desc="K, S급 나무로 레벨업, 0.0, NEW, 08.18"
+            AXButton desc="K, 시한부 아기 의원이 천재인 걸 안 숨김, 0.0, NEW, 08.17"
+          AXStaticText value="전체 웹툰"
+          AXStaticText value="917"
+          AXStaticText value="정렬"
+          AXPopUpButton value="인기순"
+          AXOpaqueProviderGroup
+            AXButton desc="N, 신체, 9.9"
+            AXButton desc="N, 참교육, 9.9, 253화"
+            AXButton desc="N, 환생천마, 9.9"
+            AXButton desc="N, 샤MONEY즘, 9.9"
+            AXButton desc="N, 시한부 천재가 살아남는 법, 9.8, 82화"
+            AXButton desc="N, 절대검감, 9.9"
+            AXButton desc="N, 백수세끼, 9.9, 286화"
+            AXButton desc="N, 귀촌리, 9.9"
+            AXButton desc="N, 똑 닮은 딸, 10.0"
+            AXButton desc="N, 소녀의 세계, 9.9"
+            AXButton desc="N, 먹는 인생2, 10.0"
+            AXButton desc="N, 파브르 in 사천당가, 10.0"
+            AXButton desc="N, 계속 써도 돈이 쌓임, 9.9"
+            AXButton desc="N, 시리도록 불꽃처럼, 9.9"
+            AXButton desc="N, 회귀한 공작가의 막내도련님은 암살자, 9.9"
+            AXButton desc="N, 청부입학, 9.7"
+            AXButton desc="N, 아포칼립스에 집을 숨김, 9.8"
+            AXButton desc="N, 천재 타자가 강속구를 숨김, 9.9"
+            AXButton desc="N, 변경백의 10클래스 망나니, 9.9"
+            AXButton desc="N, 영업 천재가 되었다, 9.9"
+          AXScrollBar value="0"
+            AXValueIndicator value="0"
+            AXButton
+            AXButton
+            AXButton
+            AXButton
+  AXToolbar
+    AXButton desc="Hide Sidebar"
+    AXGroup
+      AXImage desc="검색"
+      AXTextField desc="검색"
+  AXButton
+  AXButton
+    AXGroup
+      AXGroup
+  AXButton
+  AXStaticText value="전체보기"
+
