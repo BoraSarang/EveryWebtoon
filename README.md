@@ -1,44 +1,44 @@
-# 모두의 웹툰 (EveryWebtoon)
+# 모두의 웹툰 (Every Webtoon)
 
-macOS 전용 웹툰 뷰어 + 오프라인 다운로더. 네이버/카카오 웹툰을 검색·감상·다운로드할 수 있습니다.
+> 네이버·카카오 웹툰을 **네이티브 macOS 앱**으로. 검색·감상·다운로드를 한 곳에서.
+
+[🌐 방문하기](https://borasarang.github.io/EveryWebtoon/) · macOS 전용 (SwiftUI)
+
+네이버와 카카오 웹툰을 TV처럼 모아서 담고, 오프라인으로 이어서 감상하는 macOS 데스크톱 앱입니다. 브라우저 탭 대신 네이티브 창에서 웹툰을 보고, 회차를 내려받아 언제 어디서든 봅니다.
 
 **번들 ID**: `com.borasarang.everywebtoon`
 **저장 경로**: `~/Documents/EveryWebtoon/`
-**기술 스택**: SwiftUI (macOS 14+) + Python 3.11+ (urllib/beautifulsoup4)
+**기술 스택**: SwiftUI (macOS 14+) + Python (urllib / BeautifulSoup)
 
 ---
 
-## 주요 기능
+## 기능
 
-- **디스커버리**: 전체보기, 요일별, 랭킹, 장르, 베스트 도전, 신작, 완결
-- **뷰어**: 세로 스크롤, 폭 맞춤 토글, `←`/`→` 회차 이동, `↑`/`↓` 한 화면 스크롤, `ESC` 닫기, 비동기 이미지 로딩 + 메모리 캐시
-- **다운로드**: 회차별 다운로드 (백엔드 병렬 6페이지), 진행률·속도·ETA·바이트, **즉시 취소**, `.done` 재다운로드 스킵
-- **보관함**: 다운로드 목록, 최근 본, SQLite 메타데이터 캐싱
-- **컬렉션**: 맞춤 모음 (팔로우 → 자동 마이그레이션)
-- **이어보기**: 스크롤 비율 저장/복원, 98% 자동 다음화
-- **백업/복원**: CMD+S / CMD+Shift+S
-- **CBZ/EPUB 내보내기**: 회차별 파일 내보내기
-- **설정**: 저장 위치, 캐시 TTL, 신규 회차 알림
-- **디버그 패널**: 메뉴바 `Debug` → `Cmd+D`
+| 영역 | 내용 |
+|---|---|
+| **디스커버리** | 전체보기 · 요일별 · 랭킹 · 장르 · 베스트 도전 · 신작 · 완결 |
+| **뷰어** | 세로 스크롤 · 폭 맞춤 토글 · 화살표 회차 이동 · 비동기 이미지 + 메모리 캐시 |
+| **다운로드** | 회차별 병렬 다운로드 · 진행률/속도/ETA · 즉시 취소 · 재다운로드 스킵 |
+| **보관함** | 다운로드 목록 · 최근 본 · SQLite 메타데이터 캐싱 |
+| **컬렉션** | 맞춤 모음 · 다운로드 여부 배지 · 업데이트 감지 |
+| **이어보기** | 스크롤 위치 저장/복원 · 98% 자동 다음화 |
+| **내보내기** | 회차별 **CBZ / EPUB** 파일로 저장 |
+| **백업/복원** | 메뉴바 Cmd+S / Cmd+Shift+S |
+| **설정** | 저장 위치 · 캐시 TTL · 신규 회차 알림 |
 
 ---
 
-## 빌드 및 실행
+## 빌드 & 실행
 
 ```bash
-./scripts/build_and_run.sh debug macos   # swift build → 번들 구성 → ~/Applications 배포 → 자동 실행
+./scripts/install_python_deps.sh          # 최초 1회 — venv + 의존성
+./scripts/build_and_run.sh debug macos     # 빌드 → 배포 → 실행
 ./scripts/build_and_run.sh release macos
 ```
 
-**의존성 (최초 1회)**:
-```bash
-./scripts/install_python_deps.sh        # venv + beautifulsoup4
-```
-
-**앱 아이콘 재생성**:
-```bash
-./scripts/generate_icon.sh              # images/EveryWebtoon.png → scripts/resources/EveryWebtoon.icns
-```
+### 의존성
+- macOS 14+ (Sequoia 권장)
+- Python 3.11+
 
 ---
 
@@ -46,49 +46,22 @@ macOS 전용 웹툰 뷰어 + 오프라인 다운로더. 네이버/카카오 웹�
 
 ```
 EveryWebtoon/
-├── Sources/EveryWebtoon/               # Swift 앱 (macOS 전용)
-│   ├── App/                            # EveryWebtoonApp.swift (@main, Debug 메뉴, Settings Scene)
-│   ├── Models/                         # Webtoon, Episode, DownloadTask, SidebarNode
-│   ├── Services/                       # PythonBridge, WebtoonDB, DiscoveryCache, Managers
-│   ├── ViewModels/                     # Discover, Download, Reader, Detail, Search
-│   ├── Views/                          # UI (App, Common, Content, Sidebar, Discover,
-│   │                                   #      Library, Reader, WebtoonDetail, Search, Settings)
-│   └── Utils/                          # DebugLogger, DebugPanel, AppPaths, AppSettings
-├── backend/                            # Python JSON-RPC 백엔드
-│   ├── main.py                         # 루프, active_tasks, cancel_download
-│   ├── api.py                          # 액션 디스패처
-│   ├── downloader.py                   # 병렬 다운로드, 재시도, .done 스킵
-│   ├── exporter.py                     # CBZ/EPUB 내보내기
-│   ├── httputil.py                     # urllib HTTP
-│   ├── models.py                       # 데이터 클래스
-│   ├── discovery/                      # naver_discovery, kakao_discovery
-│   └── fetcher/                        # naver_fetcher, kakao_fetcher
-├── scripts/                            # 빌드/아이콘/파이썬 의존성
-│   ├── build_and_run.sh                # 빌드 → ~/Applications 배포 → 실행
-│   ├── generate_icon.sh                # 아이콘 PNG → icns
-│   ├── generate_icon.swift             # 아이콘 PNG 생성 (Swift/CGContext)
-│   ├── make_icns.py                    # icns 직접 조립
-│   ├── install_python_deps.sh          # venv + 의존성 설치
-│   └── resources/                      # Info.plist, EveryWebtoon.icns
-├── Package.swift                       # Swift Package (macOS 14+, .define("DEBUG"))
-├── PLAN.md                             # 설계 노트
-├── CHANGELOG.md                        # 버전 이력
-└── images/                             # 아이콘 원본
+├── Sources/EveryWebtoon/          # Swift 앱 (macOS 전용)
+│   ├── App/                       # @main, Debug 메뉴, Settings Scene
+│   ├── Models/                    # Webtoon, Episode, DownloadTask, SidebarNode
+│   ├── Services/                  # PythonBridge, WebtoonDB, DiscoveryCache, Managers
+│   ├── ViewModels/                # Discover, Download, Reader, Detail, Search
+│   ├── Views/                     # 전체 UI
+│   └── Utils/                     # DebugLogger, DebugPanel, AppPaths, AppSettings
+├── backend/                       # Python JSON-RPC 백엔드
+│   ├── main.py                    # 요청 루프 · 태스크 관리
+│   ├── api.py                     # 액션 디스패처
+│   ├── downloader.py              # 병렬 다운로드 · 재시도 · .done 스킵
+│   ├── exporter.py                # CBZ/EPUB 내보내기
+│   ├── discovery/  fetcher/       # 네이버 · 카카오 어댑터
+├── scripts/                       # 빌드 · 아이콘 · 파이썬 의존성
+└── Package.swift                  # macOS 타깃
 ```
-
----
-
-## JSON-RPC 프로토콜 (stdin/stdout)
-
-```
-요청:  {"id": "...", "action": "discover", "params": {...}}
-응답:  {"id": "...", "type": "result", "data": ...}
-진행:  {"id": "...", "type": "progress", "data": {...}}   # 다운로드 진행률
-에러:  {"id": "...", "type": "error", "data": {...}}
-```
-
-- action: `discover`, `get_episodes`, `latest_episode`, `download_episode`, `cancel_download`, `export_episode`
-- 다운로드 요청은 백그라운드 태스크로 실행 → 진행 중에도 다른 요청(취소) 처리 가능
 
 ---
 
@@ -96,20 +69,17 @@ EveryWebtoon/
 
 ```
 ~/Documents/EveryWebtoon/
-├── {제목}/                       # sanitize된 웹툰 제목
-│   ├── 001/                      # 1화
-│   │   ├── 001.jpg ...
-│   │   └── .done                 # 완료 마커 (재다운로드 스킵)
-│   └── 002/
-├── webtoons.db                   # 메타데이터 SQLite (WAL)
-├── _cache/images/                # 썸네일 디스크 캐시 (SHA256)
-└── python_call.log               # 브리지 디버그 로그
+├── {제목}/                        # 웹툰별 폴더
+│   └── 001/…002/…                 # 회차 — 001.jpg … + .done 마커
+├── webtoons.db                    # 메타데이터 SQLite (WAL)
+├── _cache/images/                 # 썸네일 디스크 캐시
+└── python_call.log                # 브리지 디버그 로그
 ```
 
 ---
 
 ## 참고
-
-- 상세 규칙: `AGENTS.md` (공통 가이드) / `PLAN.md` (설계 노트)
-- 카카오 회차 이미지 다운로드는 로그인 정책으로 불가. 네이버만 지원.
-- 디버그 패널: `Debug` 메뉴 → `Cmd+D` (AGENTS.md v1.7 표준)
+- 설계 노트: [`PLAN.md`](PLAN.md) · `docs/plans/`
+- 버전 이력: [`CHANGELOG.md`](CHANGELOG.md)
+- 디버그 패널: 메뉴바 `Debug` → `⌘⇧D`
+- 카카오 회차 이미지 다운로드는 로그인 정책으로 불가 — 네이버만 지원
