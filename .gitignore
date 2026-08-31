@@ -1,6 +1,7 @@
 .build/
 .swiftpm/
 .venv/
+docs/screenshots/
 *.xcuserdata
 *.xcodeproj/xcuserdata/
 .DS_Store
