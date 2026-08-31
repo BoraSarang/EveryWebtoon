@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모두의 웹툰 — macOS 네이티브 웹툰 뷰어</title>
+<meta name="description" content="네이버·카카오 웹툰을 네이티브 macOS 앱에서. 검색하고, 이어 보고, 회차를 내려받아 오프라인으로 감상하세요.">
+<link rel="icon" type="image/png" href="./images/EveryWebtoon.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --surface:#15151a;
+    --surface-2:#1c1c23;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.14);
+    --text:#f5f5f7;
+    --text-dim:#a1a1a6;
+    --text-faint:#6e6e73;
+    --accent:#34c759;
+    --accent-soft:rgba(52,199,89,.14);
+    --radius:16px;
+    --radius-lg:24px;
+    --font:"Pretendard Variable",-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font);
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--accent);color:#000}
+
+  /* Ambient glow */
+  .glow{
+    position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(60rem 32rem at 15% -5%, rgba(52,199,89,.09), transparent 60%),
+      radial-gradient(50rem 30rem at 95% 10%, rgba(52,199,89,.05), transparent 55%);
+  }
+  .wrap{position:relative;z-index:1}
+
+  .container{max-width:1120px;margin:0 auto;padding:0 24px}
+
+  /* Nav */
+  nav{
+    position:sticky;top:0;z-index:20;
+    backdrop-filter:saturate(180%) blur(18px);
+    background:rgba(10,10,12,.72);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .brand img{width:26px;height:26px;border-radius:7px}
+  .nav-link{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:14px;font-weight:600;color:var(--text-dim);
+    padding:8px 14px;border-radius:9px;border:1px solid var(--line-strong);
+    transition:.18s;
+  }
+  .nav-link:hover{color:var(--text);background:var(--surface-2)}
+  .nav-link svg{width:15px;height:15px}
+
+  /* Hero */
+  .hero{padding:96px 0 72px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:13px;font-weight:600;color:var(--accent);
+    background:var(--accent-soft);border:1px solid rgba(52,199,89,.25);
+    padding:6px 12px;border-radius:999px;margin-bottom:22px;
+  }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px rgba(52,199,89,.2)}
+  h1{font-size:clamp(40px,6vw,68px);font-weight:800;letter-spacing:-.035em;line-height:1.04}
+  h1 .accent{
+    background:linear-gradient(120deg,#4ade80,#34c759 45%,#16a34a);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .sub{color:var(--text-dim);font-size:clamp(17px,2.2vw,20px);margin:24px 0 36px;max-width:34em;letter-spacing:-.01em}
+  .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .btn{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:15px;font-weight:700;padding:13px 22px;border-radius:12px;
+    transition:.18s;border:1px solid transparent;
+  }
+  .btn svg{width:17px;height:17px}
+  .btn-primary{background:var(--accent);color:#03170a}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(52,199,89,.3)}
+  .btn-ghost{border-color:var(--line-strong);color:var(--text)}
+  .btn-ghost:hover{background:var(--surface-2)}
+
+  .hero-meta{display:flex;gap:28px;margin-top:44px;flex-wrap:wrap}
+  .hero-meta div{display:flex;flex-direction:column}
+  .hero-meta strong{font-size:20px;font-weight:800;letter-spacing:-.02em}
+  .hero-meta span{font-size:12.5px;color:var(--text-faint)}
+
+  /* App window mockup (signature) */
+  .stage{position:relative}
+  .window{
+    background:var(--surface);border:1px solid var(--line-strong);
+    border-radius:var(--radius-lg);overflow:hidden;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.65);
+  }
+  .titlebar{display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid var(--line);background:var(--surface)}
+  .traffic{display:flex;gap:7px}
+  .traffic i{width:12px;height:12px;border-radius:50%;display:block}
+  .traffic i:nth-child(1){background:#ff5f57}
+  .traffic i:nth-child(2){background:#febc2e}
+  .traffic i:nth-child(3){background:#28c840}
+  .titlebar .ttl{margin-left:6px;font-size:12px;color:var(--text-faint)}
+  .app-body{display:grid;grid-template-columns:136px 1fr;min-height:340px}
+  .sidebar{border-right:1px solid var(--line);padding:12px 0;background:var(--surface)}
+  .side-item{font-size:11.5px;color:var(--text-dim);padding:7px 14px;margin:2px 8px;border-radius:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .side-item.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+  .side-group{font-size:10px;color:var(--text-faint);padding:12px 14px 4px;font-weight:700;letter-spacing:.02em}
+  .content{padding:16px;overflow:hidden}
+  .content-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .content-head h3{font-size:13.5px;font-weight:700}
+  .chip{font-size:10.5px;color:var(--text-faint);border:1px solid var(--line);padding:3px 9px;border-radius:999px}
+  .thumb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .thumb{border-radius:10px;aspect-ratio:3/4;position:relative;overflow:hidden;border:1px solid var(--line)}
+  .thumb::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.55))}
+  .thumb b{position:absolute;left:10px;bottom:9px;font-size:10.5px;font-weight:700;z-index:1;letter-spacing:-.01em;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .t1{background:linear-gradient(160deg,#2f7d5a,#0f3d2b)}
+  .t2{background:linear-gradient(160deg,#7c5cff,#2a1b66)}
+  .t3{background:linear-gradient(160deg,#ff7a6b,#7a2320)}
+  .t4{background:linear-gradient(160deg,#4aa8ff,#133a6b)}
+  .t5{background:linear-gradient(160deg,#ffb54f,#7a4a12)}
+  .t6{background:linear-gradient(160deg,#3dd68c,#0e6b42)}
+  .content-head .nav-arrows{display:flex;gap:6px}
+  .arrow{width:22px;height:22px;border-radius:7px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--text-dim)}
+  .float-badge{
+    position:absolute;right:-14px;top:34px;
+    background:var(--surface-2);border:1px solid var(--line-strong);
+    padding:11px 16px;border-radius:14px;display:flex;align-items:center;gap:10px;
+    box-shadow:0 18px 40px rgba(0,0,0,.5);font-size:12.5px;font-weight:600;
+  }
+  .float-badge .ic{width:30px;height:30px;border-radius:9px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center}
+  .float-badge small{display:block;font-size:10.5px;color:var(--text-faint);font-weight:500}
+
+  /* Strip */
+  .strip{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--surface)}
+  .strip-inner{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;padding:36px 0}
+  .stat b{font-size:26px;font-weight:800;letter-spacing:-.03em;display:block}
+  .stat span{font-size:13px;color:var(--text-dim)}
+
+  /* Features */
+  .features{padding:96px 0}
+  .sec-head{max-width:640px;margin-bottom:52px}
+  .kicker{font-size:13px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.09em;margin-bottom:14px}
+  .sec-head h2{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.03em;line-height:1.15}
+  .sec-head p{color:var(--text-dim);margin-top:16px;font-size:16px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:26px;transition:.22s;
+  }
+  .card:hover{transform:translateY(-4px);border-color:var(--line-strong);background:var(--surface-2)}
+  .card .ic{width:42px;height:42px;border-radius:11px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;margin-bottom:18px}
+  .card .ic svg{width:21px;height:21px}
+  .card h3{font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+  .card p{font-size:14px;color:var(--text-dim);line-height:1.65}
+
+  /* Install */
+  .install{padding:0 0 96px}
+  .codeblock{
+    background:#101013;border:1px solid var(--line-strong);border-radius:var(--radius);
+    padding:20px 22px;font-size:13.5px;overflow-x:auto;margin-top:24px;
+  }
+  .codeblock .cm{color:var(--text-faint)}
+  .codeblock code{font-family:ui-monospace,"SF Mono",Menlo,monospace;color:#7ee787}
+  .install-inner{display:grid;grid-template-columns:1.2fr .8fr;gap:48px;align-items:center}
+  .install h2{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.03em;line-height:1.2}
+  .install p{color:var(--text-dim);margin-top:14px;font-size:15.5px}
+
+  footer{border-top:1px solid var(--line);padding:32px 0;color:var(--text-faint);font-size:13px}
+  .foot-inner{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .foot-links{display:flex;gap:20px}
+
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;gap:48px}
+    .hero{padding:64px 0}
+    .float-badge{right:0}
+    .app-body{grid-template-columns:96px 1fr}
+    .grid{grid-template-columns:1fr 1fr}
+    .strip-inner{grid-template-columns:repeat(2,1fr)}
+    .install-inner{grid-template-columns:1fr;gap:28px}
+  }
+  @media (max-width:560px){
+    .grid{grid-template-columns:1fr}
+    .strip-inner{grid-template-columns:1fr 1fr}
+    h1{font-size:38px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+  <nav>
+    <div class="container nav-inner">
+      <a class="brand" href="#top"><img src="./images/EveryWebtoon.png" alt="">모두의 웹툰</a>
+      <a class="nav-link" href="https://github.com/BoraSarang/EveryWebtoon" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow"><span class="dot"></span> macOS 앱 · 네이버 · 카카오</span>
+        <h1>웹툰을,<br><span class="accent">담아두세요.</span></h1>
+        <p class="sub">네이버·카카오 웹툰을 네이티브 macOS 앱에서 검색하고, 이어 보고, 회차를 내려받아 오프라인으로 감상하세요. 브라우저 탭 대신, 네이티브 창에서.</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="https://github.com/BoraSarang/EveryWebtoon" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 011 1v7.59l2.3-2.3a1 1 0 111.4 1.42l-4 4a1 1 0 01-1.4 0l-4-4a1 1 0 111.4-1.42L7 9.58V2a1 1 0 011-1z"/></svg>
+            소스 보기
+          </a>
+          <a class="btn btn-ghost" href="#features">
+            주요 기능
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3v10m0 0L3.5 8.5M8 13l4.5-4.5"/></svg>
+          </a>
+        </div>
+        <div class="hero-meta">
+          <div><strong>320+</strong><span>네이버 일일 웹툰</span></div>
+          <div><strong>파일로</strong><span>CBZ · EPUB 내보내기</span></div>
+          <div><strong>오프라인</strong><span>이어보기 지원</span></div>
+        </div>
+      </div>
+
+      <div class="stage">
+        <div class="window">
+          <div class="titlebar">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <span class="ttl">모두의 웹툰</span>
+          </div>
+          <div class="app-body">
+            <div class="sidebar">
+              <div class="side-group">웹툰</div>
+              <div class="side-item on">오늘의 웹툰</div>
+              <div class="side-item">요일별</div>
+              <div class="side-item">베스트 도전</div>
+              <div class="side-group">나의 모음</div>
+              <div class="side-item">보관함</div>
+              <div class="side-item">최근 본</div>
+            </div>
+            <div class="content">
+              <div class="content-head">
+                <h3>오늘의 웹툰</h3>
+                <div class="nav-arrows"><span class="arrow">‹</span><span class="arrow">›</span></div>
+              </div>
+              <div class="thumb-grid">
+                <div class="thumb t1"><b>여름의 끝</b></div>
+                <div class="thumb t2"><b>별을 품은 밤</b></div>
+                <div class="thumb t3"><b>붉은 재</b></div>
+                <div class="thumb t4"><b>파도의 도시</b></div>
+                <div class="thumb t5"><b>금요일의 계약</b></div>
+                <div class="thumb t6"><b>새벽 산책</b></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="float-badge">
+          <span class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 17l6-6-6-6M12 19h8"/></svg>
+          </span>
+          <span>회차 다운로드<small>오프라인 감상</small></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="strip">
+    <div class="container strip-inner">
+      <div class="stat"><b>60fps</b><span>부드러운 그리드 스크롤</span></div>
+      <div class="stat"><b>1.5s</b><span>콜드 스타트</span></div>
+      <div class="stat"><b>6</b><span>병렬 다운로드</span></div>
+      <div class="stat"><b>CBZ · EPUB</b><span>회차 내보내기</span></div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <div class="sec-head">
+        <div class="kicker">Key features</div>
+        <h2>브라우저가 아니어도 좋은 이유</h2>
+        <p>검색부터 감상, 오프라인 보관까지 — 한 번의 흐름으로 이어집니다.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V5a2 2 0 012-2h2M15 3h3a2 2 0 012 2v2M20 15v2a2 2 0 01-2 2h-2M9 21H6a2 2 0 01-2-2v-2"/></svg></div>
+          <h3>디스커버리</h3>
+          <p>전체·요일별·랭킹·장르·베스트 도전·신작·완결. 네이버와 카카오를 한 화면에서 둘러봅니다.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+          <h3>몰입형 뷰어</h3>
+          <p>세로 스크롤, 폭 맞춤, 공백·화살표 단축키. 이미지는 비동기 로딩과 메모리 캐시로 부드럽게.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg></div>
+          <h3>오프라인 다운로드</h3>
+          <p>회차별 병렬 다운로드, 진행률·속도·ETA, 즉시 취소, 재다운로드 스킵까지.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z"/></svg></div>
+          <h3>이어보기</h3>
+          <p>스크롤 위치를 저장하고 98% 지점에서 다음 회차로 자연스럽게 이어집니다.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg></div>
+          <h3>CBZ · EPUB 내보내기</h3>
+          <p>회차를 파일로. 전자책 리더나 구독형 뷰어 어디서든 감상할 수 있습니다.</p>
+        </div>
+        <div class="card">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 100-6 3 3 0 000 6zM19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9c.26.6.86 1 1.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></div>
+          <h3>설정과 백업</h3>
+          <p>저장 위치·캐시 TTL·신규 회차 알림. 메뉴바에서 즉시 백업과 복원.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="install">
+    <div class="container">
+      <div class="install-inner">
+        <div>
+          <div class="kicker">Install</div>
+          <h2>오픈소스, 직접 빌드해 보세요.</h2>
+          <p>macOS 14 이상에서 소스를 내려받아 실행할 수 있습니다. 배포용 아이콘과 번들 스크립트가 준비되어 있습니다.</p>
+          <div class="codeblock"><code>
+            <span class="cm"># 최초 1회 — 의존성</span><br>
+            ./scripts/install_python_deps.sh<br><br>
+            <span class="cm"># 빌드 → 배포 → 실행</span><br>
+            ./scripts/build_and_run.sh debug macos
+          </code></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <a class="btn btn-primary" style="width:100%;justify-content:center" href="https://github.com/BoraSarang/EveryWebtoon" target="_blank" rel="noopener">
+            <svg viewBox="0 0 16 16" fill="currentColor" width="17" height="17"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+            GitHub 저장소
+          </a>
+          <span style="text-align:center;font-size:12.5px;color:var(--text-faint)">번들 ID · com.borasarang.everywebtoon</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container foot-inner">
+      <span>© 2026 BoraSarang. 만들어진 제품, 지켜진 세부.</span>
+      <div class="foot-links">
+        <a href="https://github.com/BoraSarang/EveryWebtoon" target="_blank" rel="noopener">GitHub</a>
+        <a href="#top">맨 위로 ↑</a>
+      </div>
+    </div>
+  </footer>
+</div>
+</body>
+</html>
