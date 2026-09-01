@@ -1,5 +1,81 @@
 # CHANGELOG
 
+## [2026-09-01] 앱 이름 현지화 (한국어/영어) — v0.4.5
+
+### 플랫폼: macOS (SwiftUI, SwiftPM)
+
+- **요구사항**: 한글 "모두의 웹툰", 영문 "Every Webtoon"으로 앱 이름 현지화
+- **변경** (`macos-localization.md` 가이드 적용):
+  - `scripts/resources/Info.plist`:
+    - `CFBundleDisplayName`/`CFBundleName` → "EveryWebtoon" (번들명과 일치 — Finder가 번들명과 비교해 InfoPlist.strings를 로드하도록)
+    - `LSHasLocalizedDisplayName = true` 추가 (누락 시 InfoPlist.strings 무시됨)
+  - `ko.lproj/InfoPlist.strings` (UTF-16): `CFBundleDisplayName`/`CFBundleName` = "모두의 웹툰"
+  - `en.lproj/InfoPlist.strings` (UTF-16): `CFBundleDisplayName`/`CFBundleName` = "Every Webtoon"
+  - 기존에는 `CFBundleName` 누락 + `CFBundleDisplayName`이 번들명("EveryWebtoon")과 불일치("Every Webtoon") → 현지화 무시되던 문제 수정
+- **검증**: `lsregister`에서 `localizedNames`: "ko"="모두의 웹툰", "en"="Every Webtoon" 확인. 시스템 한국어 → "모두의 웹툰", 영문 → "Every Webtoon" 표시
+- **빌드**: `swift build` 성공, 앱 실행
+
+---
+
+## [2026-09-01] 사이드바 요일별/장르별 플랫폼 혼합 버그 수정 — v0.4.4
+
+### 플랫폼: macOS (SwiftUI, macOS 15+)
+
+- **버그**: 네이버/카카오의 "요일별"/"장르별" **그룹 헤더 클릭 시** `platform`/`category`가 nil이라 `loadAllView`(네이버+카카오 병합)로 잘못 라우팅되어 두 채널이 섞여 표시됨
+- **수정**:
+  - `SidebarNode`: `naver-week`/`naver-genre`/`kakao-week`/`kakao-genre` 그룹에 `platform` 부여
+  - `DiscoverViewModel.performLoad`: "전체보기(`all`)만 병합", "플랫폼 루트 + 해당 플랫폼 week/genre 그룹"은 `loadPlatformView`(채널 단일 통합)로 라우팅하도록 조건 변경
+  - `loadPlatformView`: platform을 `item.id` 대신 `item.platform` 사용
+- **결과**: 전체보기만 양쪽 병합, 모든 채널 그룹/개별 요일·장르 항목은 해당 채널 단일로 표시
+- **검증**: `swift build` 성공, 앱 실행
+
+---
+
+## [2026-09-01] 웹툰 상세 모음 추가 버튼 재구성 — v0.4.3
+
+### 플랫폼: macOS (SwiftUI, macOS 15+)
+
+- **모음 버튼 재구성**: 우측 상단 독립 VStack의 `Menu`(캡션 폴더) 제거 → `actionButtons` 행으로 통합
+  - ★ **빠른 담기 버튼**: 기본 모음("팔로우")에 즉시 담기/빼기 — `CollectionsManager.ensureDefaultCollection()`으로 없으면 자동 생성, 상태 실시간 반영
+  - 📁 **모음 선택/관리 버튼**: 기존 `CollectionAddMenu`(전체 모음 체크 + 새 모음 만들기) 유지
+- **CollectionsManager**: `defaultCollectionName` + `ensureDefaultCollection()` 추가 (기본 모음 보장)
+- **검증**: `swift build` 성공, 앱 실행
+
+---
+
+## [2026-09-01] 자동 스크롤 부드러운 스크롤 전환 — v0.4.2
+
+### 플랫폼: macOS (SwiftUI, macOS 15+)
+
+- **자동 스크롤 스터터링 수정**: 기존 매 tick(0.05s)마다 `setBoundsOrigin` 순간 점프(step-and-hold)라 낮은 주사율 모니터에서 끊겨 보였음 → `NSAnimationContext` + `.animator()`(duration 0.08s, linear) tween으로 전환, 기존 `scrollBy`(↑/↓)와 동일한 부드러운 방식. 점프로 인한 모아레/스터터 제거
+- **정리**: 더 이상 쓰지 않는 `setOrigin(_:y:)` 메서드 제거
+- **검증**: `swift build` 성공, `~/Applications/EveryWebtoon.app` 실행
+
+---
+
+## [2026-09-01] 리더 자동 스크롤 속도 보정 + 사이드바 여백 — v0.4.1
+
+### 플랫폼: macOS (SwiftUI, macOS 15+)
+
+- **자동 스크롤 속도 재설계**: 기존 `step = max(2, maxY×0.0004)×speed×20`(하한 2px 고정으로 짧은 회차에서 초당 80px + 다음화 연발) → `step = maxY×(0.001+speed×0.004)×0.05`, 하한 0.5px만. 0.1x 한 화 약 714초(기존 대비 대폭 감속), 기본 0.5x 약 333초, 2.0x 약 111초
+- **사이드바 "나의 모음" + 버튼 여백**: 커스텀 Section 헤더 HStack에 `.padding(.trailing, 6)` 추가 — 시스템 기본 헤더와 동일한 오른쪽 여백 확보
+- **검증**: `swift build` 성공, `~/Applications/EveryWebtoon.app` 배포
+
+---
+
+## [2026-09-01] 리더 차별화: 자동 스크롤 · 정주행 · 스크롤/여백 — v0.4
+
+### 플랫폼: macOS (SwiftUI, macOS 15+)
+
+- **자동 스크롤(P1/T-501)**: 뷰어 상단 바 ▶ 토글(재생/일시정지). 0.05s 타이머로 fraction 이동 — 기존 98% 자동 다음화와 연동. 속도 슬라이더(0.1x~2.0x). 수동 키(↑/↓/Space/←/→) 입력 시 자동 정지
+- **정주행 연속 재생(P2/T-502)**: 자동 스크롤 중 끝(0.98) 도달 → 다음화 자동 로드 후 `currentEpisodeNo` onChange에서 자동 재생 재개. 마지막화 도달 시 정지
+- **스크롤 보폭(P3/T-503)**: ↑/↓ 페이지 스크롤 보폭을 세밀/기본/크게(0.5/1.0/2.0x) 선택
+- **좌우 여백(P3/T-503)**: 리더 콘텐츠 좌우 여백 0~20pt 슬라이더 — 독서 몰입
+- **UI**: 뷰어 상단 바에 ▶ 재생 버튼 + ⚙️ 설정 팝오버(속도/보폭/여백) 추가
+- **검증**: `swift build` 성공(경고 2 — 기존 `positionSaveTimer`와 동일한 MainActor Sendable 정적 경고, 비차단), `~/Applications/EveryWebtoon.app` 배포 확인
+
+---
+
 ## [2026-08-18] macOS 전용 정리 + 번들 ID 변경 — v0.3.3
 
 ### 플랫폼: macOS (SwiftUI, macOS 15+)

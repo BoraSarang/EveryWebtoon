@@ -4,6 +4,14 @@
 
 ## 진행중
 
+### [macos] v0.4 — 리더 차별화: 자동 스크롤 · 정주행 · 스크롤/여백 (PLAN_v0.4_macos.md)
+
+| T | 작업 | 파일 | 상태 |
+|---|---|---|---|
+| T-501 | 자동 스크롤 + 속도 조절 (Auto Scroll 재생/일시정지/속도 슬라이더) | ReaderViewModel, ReaderView | 완료 |
+| T-502 | 정주행 연속 재생 (다음화 로드 후 자동 스크롤 유지) | ReaderViewModel, ReaderView | 완료 |
+| T-503 | 휠 스크롤 보폭 조절 + 좌우 여백 | ReaderView | 완료 |
+
 ### [macos] v0.3.3 — macOS 전용 정리 + 번들 ID 변경 (PLAN_v0.3.3_macos.md)
 
 | T | 작업 | 파일 | 상태 |
