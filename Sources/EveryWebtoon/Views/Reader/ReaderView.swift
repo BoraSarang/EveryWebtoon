@@ -18,6 +18,8 @@ struct ReaderView: View {
     @State private var positionSaveTimer: Timer?
     @State private var windowObservers: [NSObjectProtocol] = []
     @State private var barHideTask: DispatchWorkItem?
+    @State private var autoScrollTimer: Timer?
+    @State private var showSettingsPopover = false
 
     init(webtoon: Webtoon, episodes: [Episode], startEpisode: Int, onClose: (() -> Void)? = nil) {
         self.webtoon = webtoon
@@ -58,6 +60,7 @@ struct ReaderView: View {
             startPositionSaveTimer()
         }
         .onDisappear {
+            stopAutoScroll()
             removeKeyMonitor()
             saveCurrentPosition()
             positionSaveTimer?.invalidate()
@@ -65,6 +68,9 @@ struct ReaderView: View {
         }
         .onChange(of: viewModel.currentEpisodeNo) { _, newNo in
             ReaderWindowManager.shared.updateTitle("\(webtoon.title) - \(newNo)화")
+            if viewModel.autoScroll, autoScrollTimer == nil {
+                startAutoScroll()
+            }
         }
     }
 
@@ -83,6 +89,74 @@ struct ReaderView: View {
             saveFractionIfChanged(fraction)
         }
         lastFraction = fraction
+    }
+
+    // MARK: - 자동 스크롤 (Auto Scroll)
+
+    private func toggleAutoScroll() {
+        if autoScrollTimer != nil {
+            stopAutoScroll()
+        } else {
+            startAutoScroll()
+        }
+    }
+
+    private func startAutoScroll() {
+        stopAutoScroll()
+        guard scrollViewRef != nil, !viewModel.pages.isEmpty else {
+            viewModel.setAutoScroll(true)
+            return
+        }
+        viewModel.setAutoScroll(true)
+        DebugLogger.shared.push(.INFO, category: "Reader", message: "[FEATURE] auto scroll start", meta: "speed=\(viewModel.autoScrollSpeed)")
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
+            guard let sv = self.scrollViewRef, self.viewModel.autoScroll else { return }
+            self.advanceAutoScroll(in: sv)
+        }
+    }
+
+    private func advanceAutoScroll(in scrollView: NSScrollView) {
+        let clip = scrollView.contentView
+        let doc = scrollView.documentView?.frame.height ?? 0
+        let viewport = clip.bounds.height
+        guard doc > viewport else {
+            handleFractionChange(1)
+            return
+        }
+        let maxY = doc - viewport
+        // 초당 fraction 이동 (0.05s/tick). 하한을 둬서 최저 스크롤도 0으로 안 끊기게 함
+        let perSecondFraction = 0.001 + viewModel.autoScrollSpeed * 0.004
+        let step = max(maxY * perSecondFraction * 0.05, 0.5)
+        let current = clip.bounds.origin.y
+        let target = min(maxY, current + step)
+        if target >= maxY * 0.98 {
+            if !viewModel.hasNext {
+                handleFractionChange(1)
+                stopAutoScroll()
+            } else {
+                handleFractionChange(1)
+            }
+        } else {
+            smoothlyScroll(in: scrollView, to: target, duration: 0.08)
+            handleFractionChange(Double(target / maxY))
+        }
+    }
+
+    private func smoothlyScroll(in scrollView: NSScrollView, to target: CGFloat, duration: TimeInterval) {
+        let clip = scrollView.contentView
+        guard clip.bounds.origin.y != target else { return }
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = duration
+            ctx.timingFunction = CAMediaTimingFunction(name: .linear)
+            clip.animator().setBoundsOrigin(NSPoint(x: clip.bounds.origin.x, y: target))
+            scrollView.reflectScrolledClipView(clip)
+        }
+    }
+
+    private func stopAutoScroll() {
+        autoScrollTimer?.invalidate()
+        autoScrollTimer = nil
+        viewModel.setAutoScroll(false)
     }
 
     private func saveFractionIfChanged(_ fraction: Double) {
@@ -116,18 +190,23 @@ struct ReaderView: View {
                     onClose?()
                     return nil
                 case 49: // Space
+                    stopAutoScroll()
                     viewModel.goNext()
                     return nil
                 case 123: // ←
+                    stopAutoScroll()
                     viewModel.goPrevious()
                     return nil
                 case 124: // →
+                    stopAutoScroll()
                     viewModel.goNext()
                     return nil
                 case 126: // ↑
+                    stopAutoScroll()
                     scrollBy(-1)
                     return nil
                 case 125: // ↓
+                    stopAutoScroll()
                     scrollBy(1)
                     return nil
                 default:
@@ -152,7 +231,7 @@ struct ReaderView: View {
         let current = clip.bounds.origin.y
         let documentHeight = sv.documentView?.frame.height ?? 0
         let maxY = max(0, documentHeight - viewport)
-        let target = min(maxY, max(0, current + viewport * direction))
+        let target = min(maxY, max(0, current + viewport * direction * CGFloat(viewModel.scrollStep)))
 
         NSAnimationContext.runAnimationGroup { ctx in
             ctx.duration = 0.25
@@ -279,6 +358,27 @@ struct ReaderView: View {
             Spacer()
 
             Button {
+                toggleAutoScroll()
+            } label: {
+                Image(systemName: viewModel.autoScroll ? "pause.fill" : "play.fill")
+                    .foregroundColor(viewModel.autoScroll ? .yellow : .white)
+            }
+            .buttonStyle(.plain)
+            .help(viewModel.autoScroll ? "자동 스크롤 정지" : "자동 스크롤 시작")
+
+            Button {
+                showSettingsPopover.toggle()
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(.white)
+            .help("뷰어 설정 (자동 스크롤 속도/스크롤 보폭/여백)")
+            .popover(isPresented: $showSettingsPopover, arrowEdge: .bottom) {
+                readerSettingsPopover
+            }
+
+            Button {
                 viewModel.showMagnifier.toggle()
             } label: {
                 Image(systemName: "magnifyingglass")
@@ -346,6 +446,40 @@ struct ReaderView: View {
         }
         .padding(16)
         .frame(width: 260)
+    }
+
+    private var readerSettingsPopover: some View {
+        VStack(spacing: 12) {
+            Text("뷰어 설정")
+                .font(.headline)
+            HStack {
+                Text("자동 스크롤 속도")
+                Slider(value: $viewModel.autoScrollSpeed, in: 0.1...2.0)
+                Text(String(format: "%.1fx", viewModel.autoScrollSpeed))
+                    .font(.caption.monospacedDigit())
+                    .frame(width: 44, alignment: .trailing)
+            }
+            HStack {
+                Text("스크롤 보폭")
+                Picker("", selection: $viewModel.scrollStep) {
+                    Text("세밀").tag(0.5)
+                    Text("기본").tag(1.0)
+                    Text("크게").tag(2.0)
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(width: 180)
+            }
+            HStack {
+                Text("좌우 여백")
+                Slider(value: $viewModel.horizontalPadding, in: 0...20)
+                Text("\(Int(viewModel.horizontalPadding))pt")
+                    .font(.caption.monospacedDigit())
+                    .frame(width: 40, alignment: .trailing)
+            }
+        }
+        .padding(16)
+        .frame(width: 300)
     }
 
     private var bottomBar: some View {
@@ -467,6 +601,7 @@ struct ReaderView: View {
                         contrast: viewModel.contrast,
                         magnifierEnabled: viewModel.showMagnifier
                     )
+                    .padding(.horizontal, viewModel.horizontalPadding)
                 }
             }
             .background(ScrollViewFinder { scrollView in

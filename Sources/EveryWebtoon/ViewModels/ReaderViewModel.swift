@@ -19,6 +19,10 @@ final class ReaderViewModel: ObservableObject {
     @Published var downloadSpeed = ""
     @Published var errorMessage: String?
     @Published var restoreFraction: Double = 0
+    @Published var autoScroll = false
+    @Published var autoScrollSpeed: Double = 0.5
+    @Published var scrollStep: Double = 1.0
+    @Published var horizontalPadding: CGFloat = 0
 
     let webtoon: Webtoon
     let episodes: [Episode]
@@ -186,6 +190,10 @@ final class ReaderViewModel: ObservableObject {
             episodeNo: currentEpisodeNo,
             fraction: fraction
         )
+    }
+
+    func setAutoScroll(_ on: Bool) {
+        autoScroll = on
     }
 
     deinit {
