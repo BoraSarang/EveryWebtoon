@@ -38,6 +38,7 @@ struct SidebarView: View {
                         .buttonStyle(.plain)
                         .help("새 모음 만들기")
                     }
+                    .padding(.trailing, 6)
                 }
 
                 Section("발견") {

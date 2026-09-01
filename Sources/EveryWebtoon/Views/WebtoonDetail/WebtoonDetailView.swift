@@ -93,30 +93,32 @@ struct WebtoonDetailView: View {
                         .padding(.top, 4)
                 }
             }
-
-            VStack(alignment: .trailing, spacing: 8) {
-                Menu {
-                    CollectionAddMenu(webtoonId: webtoon.id)
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: collections.isInAny(webtoon.id) ? "folder.fill" : "folder")
-                            .foregroundColor(collections.isInAny(webtoon.id) ? .yellow : .secondary)
-                        Text(collections.isInAny(webtoon.id) ? "모음에 추가됨" : "모음에 추가")
-                            .font(.caption)
-                            .foregroundColor(.primary)
-                    }
-                }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
-                .fixedSize()
-                .help(collections.isInAny(webtoon.id) ? "모음에서 제거하려면 열어서 선택" : "모음에 추가")
-                Spacer()
-            }
         }
     }
 
     private var actionButtons: some View {
         HStack(spacing: 12) {
+            Button {
+                let defaultName = collections.ensureDefaultCollection()
+                collections.toggle(webtoon.id, in: defaultName)
+            } label: {
+                let inDefault = collections.isIn(webtoon.id, name: collections.defaultCollectionName)
+                Label(inDefault ? "담음" : "담기", systemImage: inDefault ? "star.fill" : "star")
+            }
+            .buttonStyle(.bordered)
+            .help("'\(collections.defaultCollectionName)' 모음에 담기/빼기")
+
+            Menu {
+                CollectionAddMenu(webtoonId: webtoon.id)
+            } label: {
+                Image(systemName: "folder")
+                    .foregroundColor(collections.isInAny(webtoon.id) ? .yellow : .secondary)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .help("모음 선택/관리")
+
             Menu {
                 Button("최근 10화 다운로드") {
                     downloadRange(viewModel.episodes.prefix(10).map { $0.episodeNo })

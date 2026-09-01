@@ -39,6 +39,18 @@ final class CollectionsManager: ObservableObject {
 
     var names: [String] { order }
 
+    var defaultCollectionName: String { "팔로우" }
+
+    func ensureDefaultCollection() -> String {
+        let name = defaultCollectionName
+        if !collections.keys.contains(name) {
+            collections[name] = []
+            order.insert(name, at: 0)
+            persist()
+        }
+        return name
+    }
+
     func ids(in name: String) -> Set<String> {
         collections[name] ?? []
     }
