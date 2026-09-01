@@ -84,11 +84,11 @@ final class DiscoverViewModel: ObservableObject {
         errorMessage = nil
         defer { isLoading = false }
 
-        if item.id == "naver" || item.id == "kakao" {
-            await loadPlatformView(item)
-        } else if item.platform == nil {
+        if item.id == "all" {
             await loadAllView(item)
-        } else if item.category == "weekday", item.platform == "naver" {
+        } else if item.platform != nil, item.isGroup {
+            await loadPlatformView(item)
+        } else if item.platform == "naver", item.category == "weekday" {
             await loadWeekdayView(item)
         } else {
             await loadSingleList(item)
@@ -96,7 +96,7 @@ final class DiscoverViewModel: ObservableObject {
     }
 
     private func loadPlatformView(_ item: SidebarItem) async {
-        let platform = item.id
+        let platform = item.platform ?? item.id
         topWebtoons = []
         kakaoTopWebtoons = []
         topTitle = ""
