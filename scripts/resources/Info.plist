@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ko</string>
 	<key>CFBundleDisplayName</key>
-	<string>Every Webtoon</string>
+	<string>EveryWebtoon</string>
 	<key>CFBundleExecutable</key>
 	<string>EveryWebtoon</string>
 	<key>CFBundleIconFile</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.borasarang.everywebtoon</string>
 	<key>CFBundleName</key>
-	<string>Every Webtoon</string>
+	<string>EveryWebtoon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,6 +24,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>LSHasLocalizedDisplayName</key>
+	<true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>NSHighResolutionCapable</key>
